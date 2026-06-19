@@ -8,12 +8,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        /* 입력창 높이 축소 */
+        input[type="date"], input[type="time"] { height: 38px; padding: 4px 10px; }
     </style>
 </head>
 <body class="py-6 px-4">
     <div class="max-w-xl mx-auto">
         <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">초과근무 관리 시스템</h1>
+            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">초과근무 관리</h1>
             <p class="text-slate-400 mt-2 text-sm font-medium uppercase tracking-widest">Smart Overtime Management</p>
         </header>
 
@@ -26,11 +28,11 @@
             <div class="flex flex-col sm:flex-row gap-3 mb-4">
                 <div class="flex-1">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">날짜</label>
-                    <input type="date" id="dateInput" class="w-full bg-slate-50 border border-slate-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="date" id="dateInput" class="w-full bg-slate-50 border border-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="flex-1">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">퇴근 시간</label>
-                    <input type="time" id="timeInput" class="w-full bg-slate-50 border border-slate-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="time" id="timeInput" class="w-full bg-slate-50 border border-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
             
@@ -43,12 +45,12 @@
                 </label>
             </div>
 
-            <button onclick="addRecord()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition active:scale-[0.98]">
+            <button onclick="addRecord()" class="w-full bg-[#1e3a8a] text-white font-bold py-3 rounded-xl hover:bg-[#172554] transition active:scale-[0.98]">
                 기록 추가
             </button>
         </div>
 
-        <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white mb-6 shadow-xl shadow-indigo-200">
+        <div class="bg-gradient-to-br from-[#4f46e5] to-[#6366f1] rounded-2xl p-6 text-white mb-6 shadow-xl shadow-indigo-200">
             <h2 class="text-indigo-100 text-xs font-medium mb-1" id="currentMonthLabel">이번 달 누적 초과근무</h2>
             <div id="totalDisplay" class="text-3xl font-bold">0시간 0분</div>
         </div>
@@ -60,10 +62,10 @@
             </div>
             <div id="recordTable" class="divide-y divide-slate-50"></div>
         </div>
-        <button onclick="undoDelete()" id="undoBtn" class="mt-4 w-full text-center text-xs text-slate-400 hover:text-indigo-600 hidden">삭제 복원하기</button>
+        <button onclick="undoDelete()" id="undoBtn" class="mt-4 w-full text-center text-xs text-slate-400 hover:text-blue-700 hidden">삭제 복원하기</button>
         
         <footer class="mt-8 text-center">
-            <p class="text-[10px] text-slate-300 uppercase tracking-widest">Made by Minsoo Kim</p>
+            <p class="text-[10px] text-slate-300 uppercase tracking-widest">Made by minsoo</p>
         </footer>
     </div>
 
@@ -128,7 +130,7 @@
                 total += r.minutes;
                 container.innerHTML += `<div class="px-5 py-4 flex justify-between items-center text-sm">
                     <div><span class="font-bold text-slate-700">${r.date.slice(5)}</span> <span class="text-slate-400">(${r.time})</span></div>
-                    <div class="flex items-center gap-3"><span class="font-bold text-indigo-600">${Math.floor(r.minutes/60)}h ${r.minutes%60}m</span><button onclick="deleteRecord(${i})" class="text-slate-200 hover:text-red-400">✕</button></div>
+                    <div class="flex items-center gap-3"><span class="font-bold text-indigo-700">${Math.floor(r.minutes/60)}h ${r.minutes%60}m</span><button onclick="deleteRecord(${i})" class="text-slate-200 hover:text-red-400">✕</button></div>
                 </div>`;
             });
             document.getElementById('totalDisplay').innerText = `${Math.floor(total/60)}시간 ${total%60}분`;
