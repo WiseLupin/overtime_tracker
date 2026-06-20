@@ -1,0 +1,146 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초과근무 관리시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; }
+        input[type="date"], input[type="time"], input[type="month"] {
+            width: 100%; height: 44px; padding: 0 12px; font-size: 16px; box-sizing: border-box;
+            appearance: none; -webkit-appearance: none; border-radius: 0.5rem; max-width: 100%; overflow: hidden;
+            border: 1px solid #e2e8f0; background-color: #f8fafc;
+        }
+        /* 토글 스위치 스타일 */
+        .toggle-checkbox:checked { right: 0; border-color: #1e3a8a; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #1e3a8a; }
+    </style>
+</head>
+<body class="py-6 px-4">
+    <div class="max-w-md mx-auto">
+        <header class="mb-6 text-center">
+            <h1 class="text-2xl font-bold text-slate-800">초과근무 관리시스템</h1>
+            <p class="text-slate-400 text-xs mt-1 tracking-[0.2em] uppercase">Teacher Overtime Management</p>
+        </header>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6">
+            <label class="block text-xs font-bold text-slate-500 mb-2">기준 월 설정</label>
+            <input type="month" id="monthFilter" onchange="render()">
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2">날짜 선택</label>
+                <input type="date" id="dateInput">
+            </div>
+
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <label class="text-sm font-bold text-slate-700">아침근무 추가</label>
+                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="morningToggle" onchange="toggleMorning()" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="morningToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                </div>
+            </div>
+            <div id="morningSection" class="hidden">
+                <input type="time" id="morningTime">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <label class="flex items-center justify-center text-sm font-semibold text-slate-600 cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <input type="checkbox" id="isSupplementary" class="w-4 h-4 accent-blue-700 mr-2"> 방과후
+                </label>
+                <label class="flex items-center justify-center text-sm font-semibold text-slate-600 cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <input type="checkbox" id="isWeekend" class="w-4 h-4 accent-blue-700 mr-2"> 주말근무
+                </label>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2">퇴근 시간</label>
+                <input type="time" id="timeInput">
+            </div>
+
+            <button onclick="addRecord()" class="w-full bg-[#1e3a8a] text-white font-bold py-4 rounded-xl hover:bg-[#172554] transition shadow-md">기록 추가</button>
+        </div>
+
+        <div class="bg-indigo-700 rounded-2xl p-6 text-white mb-6 shadow-lg shadow-indigo-200">
+            <h2 class="text-indigo-200 text-xs font-medium mb-1">이번 달 누적 초과근무</h2>
+            <div id="totalDisplay" class="text-3xl font-bold">0시간 0분</div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-700">기록 리스트</h3>
+                <button onclick="resetMonth()" class="text-xs text-red-400 hover:text-red-600 font-bold">월 초기화</button>
+            </div>
+            <div id="recordTable" class="divide-y divide-slate-100"></div>
+        </div>
+
+        <footer class="mt-8 text-center pb-6">
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest">Made by minsoo</p>
+        </footer>
+    </div>
+
+    <script>
+        let records = JSON.parse(localStorage.getItem('overtime_records')) || [];
+        function init() {
+            const today = new Date();
+            document.getElementById('dateInput').valueAsDate = today;
+            document.getElementById('timeInput').value = "18:00";
+            document.getElementById('monthFilter').value = today.toISOString().slice(0, 7);
+            render();
+        }
+        function toggleMorning() { document.getElementById('morningSection').classList.toggle('hidden', !document.getElementById('morningToggle').checked); }
+        function addRecord() {
+            const date = document.getElementById('dateInput').value;
+            const eveningTime = document.getElementById('timeInput').value;
+            const isWeekend = document.getElementById('isWeekend').checked;
+            const isSupplementary = document.getElementById('isSupplementary').checked;
+            const morningUsed = document.getElementById('morningToggle').checked;
+            const morningTime = morningUsed ? document.getElementById('morningTime').value : null;
+            records.push({ date, eveningTime, morningTime, isWeekend, isSupplementary, morningUsed });
+            save(); render();
+        }
+        function calculateMinutes(r) {
+            let total = 0;
+            if (r.morningUsed && r.morningTime) {
+                const [h, m] = r.morningTime.split(':').map(Number);
+                const startWork = 8 * 60 + 30;
+                const arrival = h * 60 + m;
+                if (arrival < startWork) total += (startWork - arrival);
+            }
+            const [h, m] = r.eveningTime.split(':').map(Number);
+            const totalE = h * 60 + m;
+            const endWork = 16 * 60 + 30;
+            if (totalE > endWork) {
+                let diff = totalE - endWork;
+                if (!r.isWeekend) diff -= 60;
+                if (r.isSupplementary) diff -= 100;
+                total += Math.max(0, diff);
+            }
+            return Math.min(total, 240);
+        }
+        function save() { localStorage.setItem('overtime_records', JSON.stringify(records)); }
+        function render() {
+            const container = document.getElementById('recordTable');
+            const month = document.getElementById('monthFilter').value;
+            container.innerHTML = '';
+            let totalM = 0;
+            records.filter(r => r.date.startsWith(month)).forEach((r, i) => {
+                const min = calculateMinutes(r);
+                totalM += min;
+                container.innerHTML += `<div class="p-4 cursor-pointer hover:bg-slate-50" onclick="alert('상세 계산 내역:\\n 인정시간: ${min}분\\n [아침] ${r.morningUsed ? (8*60+30 - (r.morningTime.split(':')[0]*60 + r.morningTime.split(':')[1])) : 0}분\\n [저녁] ${Math.max(0, (r.eveningTime.split(':')[0]*60 + r.eveningTime.split(':')[1]) - (16*60+30))}분\\n [공제] ${r.isWeekend ? 0 : 60}분(기본) + ${r.isSupplementary ? 100 : 0}분(방과후)')">
+                    <div class="flex justify-between items-center text-sm"><span class="font-bold text-slate-700">${r.date.slice(5)}</span><span class="font-bold text-indigo-700">${Math.floor(min/60)}h ${min%60}m</span></div>
+                </div>`;
+            });
+            document.getElementById('totalDisplay').innerText = `${Math.floor(totalM/60)}시간 ${totalM%60}분`;
+        }
+        function resetMonth() { if(confirm("선택한 달의 기록을 초기화할까요?")) { records = records.filter(r => !r.date.startsWith(document.getElementById('monthFilter').value)); save(); render(); } }
+        init();
+    </script>
+</body>
+</html>
+
+```
