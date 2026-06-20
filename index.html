@@ -46,7 +46,11 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 space-y-6">
-            <div><label class="block text-xs font-bold text-slate-500 mb-2">날짜 선택</label><input type="date" id="dateInput"></div>
+            <div class="flex justify-between items-center mb-2">
+                <label class="text-xs font-bold text-slate-500">날짜 선택</label>
+                <button onclick="fullResetInput()" class="text-[10px] bg-slate-200 px-2 py-1 rounded font-bold">초기화</button>
+            </div>
+            <input type="date" id="dateInput">
             
             <div class="space-y-4">
                 <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -74,17 +78,14 @@
             <div class="space-y-4">
                 <label class="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100"><input type="checkbox" id="isSupplementary" class="w-5 h-5 accent-blue-800 mr-3"> <span class="text-sm font-bold text-slate-700">방과후 수업</span></label>
                 <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs font-bold text-slate-500">퇴근 시간</label>
-                        <button onclick="setCurrentTime('timeInput')" class="text-[10px] bg-slate-200 px-2 py-1 rounded">현재시간</button>
-                    </div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">퇴근 시간</label>
                     <input type="time" id="timeInput">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
                 <button onclick="addRecord()" class="bg-[#1e3a8a] text-white font-bold py-4 rounded-xl hover:bg-[#172554] transition shadow-md">기록 추가</button>
-                <button onclick="resetInput()" class="bg-slate-200 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-300 transition">입력 초기화</button>
+                <button onclick="applyCurrentTime()" class="bg-slate-800 text-white font-bold py-4 rounded-xl hover:bg-slate-900 transition">현재시간 반영</button>
             </div>
         </div>
 
@@ -107,26 +108,23 @@
         let records = JSON.parse(localStorage.getItem('overtime_records')) || [];
         let config = JSON.parse(localStorage.getItem('work_config')) || { start: "08:30", end: "16:30", supp: 100 };
         function init() {
-            resetInput();
             document.getElementById('monthFilter').value = new Date().toISOString().slice(0, 7);
             document.getElementById('setStart').value = config.start;
             document.getElementById('setEnd').value = config.end;
             document.getElementById('setSupp').value = config.supp;
             render();
         }
-        function setCurrentTime(id) {
-            const now = new Date();
-            document.getElementById(id).value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-        }
-        function resetInput() {
-            document.getElementById('dateInput').valueAsDate = new Date();
+        function fullResetInput() {
+            document.getElementById('dateInput').value = "";
+            document.getElementById('timeInput').value = "";
             document.getElementById('morningToggle').checked = false; document.getElementById('morningSection').classList.add('hidden');
             document.getElementById('weekendToggle').checked = false; document.getElementById('weekendSection').classList.add('hidden');
             document.getElementById('isSupplementary').checked = false;
-            setCurrentTime('timeInput');
-            setCurrentTime('morningTime');
-            setCurrentTime('weekendStart');
-            setCurrentTime('weekendEnd');
+        }
+        function applyCurrentTime() {
+            const now = new Date();
+            document.getElementById('dateInput').valueAsDate = now;
+            document.getElementById('timeInput').value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
         }
         function toggleSettings() { document.getElementById('settingsSection').classList.toggle('hidden'); }
         function saveSettings() {
