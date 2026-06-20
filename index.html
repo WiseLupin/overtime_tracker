@@ -39,11 +39,15 @@
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6">
             <label class="block text-xs font-bold text-slate-500 mb-2">기준 월 설정</label>
-            <input type="month" id="monthFilter" onchange="render()">
+            <div class="flex gap-2">
+                <input type="month" id="monthFilter" class="flex-1">
+                <button onclick="render()" class="bg-slate-200 text-slate-700 px-4 rounded-lg font-bold text-sm">적용</button>
+            </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 space-y-6">
             <div><label class="block text-xs font-bold text-slate-500 mb-2">날짜 선택</label><input type="date" id="dateInput"></div>
+            
             <div class="space-y-4">
                 <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <label class="text-sm font-bold text-slate-700">아침 근무</label>
@@ -53,10 +57,11 @@
                     </div>
                 </div>
                 <div id="morningSection" class="hidden space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">출근 시간</label><input type="time" id="morningTime"></div>
+                
                 <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <label class="text-sm font-bold text-slate-700">주말 근무</label>
                     <div class="relative inline-block w-12 align-middle select-none transition duration-200">
-                        <input type="checkbox" id="weekendToggle" onchange="toggleWeekend()" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <input type="checkbox" id="weekendToggle" onchange="toggleSection('weekend')" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
                         <label for="weekendToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
                     </div>
                 </div>
@@ -65,11 +70,22 @@
                     <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase">퇴근 시간</label><input type="time" id="weekendEnd"></div>
                 </div>
             </div>
-            <div id="weekdayOptions" class="space-y-4">
+
+            <div class="space-y-4">
                 <label class="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100"><input type="checkbox" id="isSupplementary" class="w-5 h-5 accent-blue-800 mr-3"> <span class="text-sm font-bold text-slate-700">방과후 수업</span></label>
-                <div><label class="block text-xs font-bold text-slate-500 mb-2">퇴근 시간</label><input type="time" id="timeInput"></div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-bold text-slate-500">퇴근 시간</label>
+                        <button onclick="setCurrentTime('timeInput')" class="text-[10px] bg-slate-200 px-2 py-1 rounded">현재시간</button>
+                    </div>
+                    <input type="time" id="timeInput">
+                </div>
             </div>
-            <button onclick="addRecord()" class="w-full bg-[#1e3a8a] text-white font-bold py-4 rounded-xl hover:bg-[#172554] transition shadow-md">기록 추가</button>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="addRecord()" class="bg-[#1e3a8a] text-white font-bold py-4 rounded-xl hover:bg-[#172554] transition shadow-md">기록 추가</button>
+                <button onclick="resetInput()" class="bg-slate-200 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-300 transition">입력 초기화</button>
+            </div>
         </div>
 
         <div class="bg-indigo-700 rounded-2xl p-6 text-white mb-6 shadow-lg shadow-indigo-200">
@@ -84,20 +100,33 @@
             </div>
             <div id="recordTable" class="divide-y divide-slate-100"></div>
         </div>
-        <footer class="mt-8 text-center pb-6"><p class="text-[10px] text-slate-400 uppercase tracking-widest">MADE BY MINSOO KIM</p></footer>
+        <footer class="mt-8 text-center pb-6"><p class="text-[10px] text-slate-400">© 2026 Minsoo Kim. All rights reserved.</p></footer>
     </div>
 
     <script>
         let records = JSON.parse(localStorage.getItem('overtime_records')) || [];
         let config = JSON.parse(localStorage.getItem('work_config')) || { start: "08:30", end: "16:30", supp: 100 };
         function init() {
-            document.getElementById('dateInput').valueAsDate = new Date();
-            document.getElementById('timeInput').value = "18:00";
+            resetInput();
             document.getElementById('monthFilter').value = new Date().toISOString().slice(0, 7);
             document.getElementById('setStart').value = config.start;
             document.getElementById('setEnd').value = config.end;
             document.getElementById('setSupp').value = config.supp;
             render();
+        }
+        function setCurrentTime(id) {
+            const now = new Date();
+            document.getElementById(id).value = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        }
+        function resetInput() {
+            document.getElementById('dateInput').valueAsDate = new Date();
+            document.getElementById('morningToggle').checked = false; document.getElementById('morningSection').classList.add('hidden');
+            document.getElementById('weekendToggle').checked = false; document.getElementById('weekendSection').classList.add('hidden');
+            document.getElementById('isSupplementary').checked = false;
+            setCurrentTime('timeInput');
+            setCurrentTime('morningTime');
+            setCurrentTime('weekendStart');
+            setCurrentTime('weekendEnd');
         }
         function toggleSettings() { document.getElementById('settingsSection').classList.toggle('hidden'); }
         function saveSettings() {
@@ -106,13 +135,9 @@
             toggleSettings(); render();
         }
         function toggleSection(id) { document.getElementById(id + 'Section').classList.toggle('hidden', !document.getElementById(id + 'Toggle').checked); }
-        function toggleWeekend() {
-            const isChecked = document.getElementById('weekendToggle').checked;
-            document.getElementById('weekendSection').classList.toggle('hidden', !isChecked);
-            document.getElementById('weekdayOptions').classList.toggle('hidden', isChecked);
-        }
         function addRecord() {
             records.push({
+                id: Date.now(),
                 date: document.getElementById('dateInput').value,
                 eveningTime: document.getElementById('timeInput').value,
                 isSupplementary: document.getElementById('isSupplementary').checked,
@@ -124,12 +149,14 @@
             });
             save(); render();
         }
+        function deleteRecord(id) { records = records.filter(r => r.id !== id); save(); render(); }
         function getDetail(r) {
             let mMin = 0, eMin = 0, wMin = 0, total = 0;
             if(r.wUsed) {
                 const s = r.wStart.split(':').map(Number); const e = r.wEnd.split(':').map(Number);
                 wMin = (e[0]*60 + e[1]) - (s[0]*60 + s[1]);
-                total = wMin;
+                let suppDeduction = r.isSupplementary ? config.supp : 0;
+                total = Math.max(0, wMin - suppDeduction);
             } else {
                 if (r.mUsed) {
                     const m = r.mTime.split(':').map(Number);
@@ -149,15 +176,23 @@
             const container = document.getElementById('recordTable');
             const month = document.getElementById('monthFilter').value;
             container.innerHTML = ''; let totalMonthM = 0;
-            records.filter(r => r.date.startsWith(month)).forEach((r) => {
+            records.filter(r => r.date.startsWith(month)).sort((a,b) => a.date.localeCompare(b.date)).forEach((r) => {
                 const d = getDetail(r); totalMonthM += d.total;
-                const formula = r.wUsed ? `주말근무: ${d.wMin}분` : `아침(${d.mMin}분) + 저녁(${d.eMin}분) - {기본공제 60분 + 보충수업 ${r.isSupplementary ? config.supp : 0}분}`;
-                container.innerHTML += `<div class="p-4 cursor-pointer hover:bg-slate-50" onclick="alert('계산식: ${formula}\\n인정 시간: ${d.total}분')">
-                    <div class="flex justify-between items-center text-sm"><span class="font-bold text-slate-700">${r.date.slice(5)}</span><span class="font-bold text-indigo-700">${Math.floor(d.total/60)}h ${d.total%60}m</span></div></div>`;
+                const formula = r.wUsed ? `주말(${d.wMin}분) - {보충수업 ${r.isSupplementary ? config.supp : 0}분}` : `아침(${d.mMin}분) + 저녁(${d.eMin}분) - {기본공제 60분 + 보충수업 ${r.isSupplementary ? config.supp : 0}분}`;
+                container.innerHTML += `<div class="p-4 border-b border-slate-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-slate-700">${r.date.slice(5)}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-indigo-700">${Math.floor(d.total/60)}h ${d.total%60}m</span>
+                            <button onclick="deleteRecord(${r.id})" class="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded">삭제</button>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 bg-slate-50 p-2 rounded truncate">${formula}</p>
+                </div>`;
             });
             document.getElementById('totalDisplay').innerText = `${Math.floor(totalMonthM/60)}시간 ${totalMonthM%60}분`;
         }
-        function resetMonth() { if(confirm("초기화할까요?")) { records = records.filter(r => !r.date.startsWith(document.getElementById('monthFilter').value)); save(); render(); } }
+        function resetMonth() { if(confirm("선택한 달의 기록을 초기화할까요?")) { records = records.filter(r => !r.date.startsWith(document.getElementById('monthFilter').value)); save(); render(); } }
         init();
     </script>
 </body>
